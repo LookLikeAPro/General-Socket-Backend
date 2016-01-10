@@ -1,8 +1,8 @@
 {
   "author": "Jerry Zhou",
-  "name": "Node-Traceur-Starter",
+  "name": "general socket backend",
   "version": "0.0.0",
-  "description": "Node project scaffold with ES6 syntax",
+  "description": "general socket backend",
   "repository": "",
   "license": "MIT",
   "scripts": {
