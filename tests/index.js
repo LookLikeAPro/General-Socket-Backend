@@ -1,7 +1,5 @@
 import io from "socket.io-client";
-import {run as runApp} from "../app";
-
-var socketURL = "http://0.0.0.0:5000";
+var socketURL = "http://0.0.0.0:"+require(__dirname + "/../config/config.json").port;
 
 function mockClient(name) {
 	var client = io.connect(socketURL);
@@ -32,7 +30,6 @@ function mockClient(name) {
 }
 
 export function run() {
-	runApp();
 	mockClient(1);
 	mockClient(2);
 }

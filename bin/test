@@ -1,0 +1,10 @@
+#!/usr/bin/env node
+
+require("../config/setup");
+var app = require("../app");
+var models = require("../models");
+
+models.sequelize.sync().then(function() {
+	app.run();
+	require("../tests").run();
+});

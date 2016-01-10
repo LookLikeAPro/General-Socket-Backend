@@ -1,6 +1,6 @@
 import uuid from "uuid";
 import Room from "./models/room";
-import db from "./database";
+import db from "./tempDatabase";
 
 function* entries(obj) {
 	for (let key of Object.keys(obj)) {
