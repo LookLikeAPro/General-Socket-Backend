@@ -1,6 +1,6 @@
 {
   "author": "Jerry Zhou",
-  "name": "general socket backend",
+  "name": "general-socket-backend",
   "version": "0.0.0",
   "description": "general socket backend",
   "repository": "",
@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "colors": "^1.1.2",
+    "lokijs": "^1.3.11",
     "socket.io": "^1.4.3",
     "socket.io-client": "^1.4.3",
     "traceur": "0.0.96",

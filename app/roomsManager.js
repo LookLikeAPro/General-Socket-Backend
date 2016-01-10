@@ -1,5 +1,6 @@
 import uuid from "uuid";
 import Room from "./models/room";
+import db from "./database";
 
 function* entries(obj) {
 	for (let key of Object.keys(obj)) {
@@ -9,67 +10,62 @@ function* entries(obj) {
 
 class roomsManager {
 	constructor() {
-		this.rooms = {};
-		this.users = {};
-		this.userRoomRelation = {};
+		this.rooms = db.addCollection("rooms", {
+			unique: ["id"]
+		});
+		this.users = db.addCollection("users", {
+			unique: ["name"]
+		});
+		this.userRoomRel = db.addCollection("user_room");
 	}
 	getRooms() {
-		var roomsArray = [];
-		for (let [id, room] of entries(this.rooms)) {
-			roomsArray.push(room);
-		}
-		return roomsArray;
+		return this.rooms.data;
 	}
 	getUsers() {
-		var usersArray = [];
-		for (let [id, user] of entries(this.users)) {
-			usersArray.push(user);
-		}
-		return usersArray;
+		return this.users.data;
 	}
 	getRoomsCount() {
-		return Object.keys(this.rooms).length;
+		return this.rooms.length;
 	}
 	getUsersCount() {
-		return Object.keys(this.users).length;
+		return this.users.length;
 	}
-	getRoom(user) {
-		return this.rooms[this.userRoomRelation[user.name]];
+	getRoomOfUser(user) {
+		var roomId = this.userRoomRel.findOne({user: user.name}).room;
+		return this.rooms.findOne({id: roomId});
 	}
 	getUserByName(name) {
-		return this.users[name];
+		return this.users.findOne({name});
 	}
-	getRoomByUUID(id) {
-		return this.rooms[id];
+	getRoomByID(id) {
+		return this.rooms.findOne({id});
 	}
-	_createRoom() {
-		var room = new Room({uuid:uuid.v4()});
-		this.rooms[room.uuid] = room;
-		return room;
+	setRoomChannel(room, channel) {
+		room.channel = channel;
+		this.rooms.update(room);
 	}
 	registerUser(user) {
-		for (let [id, room] of entries(this.rooms)) {
-			if (!room.isFull()) {
-				room.join(user);
-				this.userRoomRelation[user.name] = room.uuid;
-				return room;
-			}
-		}
-		//at this point, all rooms are full
-		var room = this._createRoom();
-		this.userRoomRelation[user.name] = room.uuid;
-		return room;
-	}
-	deleteUser(user) {
-		var room = this.getRoom(user);
-		if (room && room.userCount === 1) {
-			delete this.rooms[room.uuid];
+		this.users.insert(user);
+		var possibleRoom = this.rooms.findOne({
+			userCount: {$lt: 16}
+		});
+		if (possibleRoom) {
+			this.userRoomRel.insert({user: user.name, room: possibleRoom.id});
+			possibleRoom.userCount++;
+			this.rooms.update(possibleRoom);
 		}
 		else {
-			room.leave(user);
+			var newRoom = {
+				id: uuid.v4(),
+				userCount: 1
+			};
+			this.rooms.insert(newRoom);
+			this.userRoomRel.insert({user: user.name, room: newRoom.id});
 		}
-		delete this.users[user.name];
-		delete this.userRoomRelation[user.name];
+		return user;
+	}
+	deleteUser(user) {
+		this.users.removeWhere({name: user.name});
 	}
 }
 

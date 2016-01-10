@@ -1,22 +1,38 @@
-import client from "socket.io-client";
+import io from "socket.io-client";
 import {run as runApp} from "../app";
 
 var socketURL = "http://0.0.0.0:5000";
 
+function mockClient(name) {
+	var client = io.connect(socketURL);
+	var room = "";
+	client.on("connect", function() {
+		client.emit("authentication", {name: name, password: "secret"});
+		client.on("authenticated", function() {
+			console.log("I am now authenticated");
+		});
+		client.on("newUser", function(user) {
+			console.log(`Room ${room.id} has new joiner ${user.name}`);
+		});
+		client.on("setRoom", function(newRoom) {
+			room = newRoom;
+			setInterval(function() {
+				client.emit("userRealtime", {
+					position: {
+						
+					},
+					vector: {
+						
+					}
+				});
+			}, 1000);
+		});
+	});
+	return client;
+}
+
 export function run() {
 	runApp();
-	var client1 = client.connect(socketURL);
-	client1.on("connect", function(){
-		client1.emit("authentication", {username: "John", password: "secret"});
-		client1.on("authenticated", function() {
-			console.log("I AM NOW LOL");
-		});
-	});
-	var client2 = client.connect(socketURL);
-	client2.on("connect", function(){
-		client2.emit("authentication", {username: "John", password: "secret"});
-		client2.on("authenticated", function() {
-			console.log("I AM NOW LOL");
-		});
-	});
+	mockClient(1);
+	mockClient(2);
 }

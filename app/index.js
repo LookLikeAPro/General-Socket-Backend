@@ -1,24 +1,26 @@
 import socketio from "socket.io";
 import roomsManager from "./roomsManager";
 
-class User {
-	constructor({name, password}) {
-		this.name = name;
-		this._password = password;
-	}
-}
-
 export function run() {
 	var io = socketio(5000);
 
-	io.on("connection", function(socket) {
+	io.sockets.on("connection", function(socket) {
 		socket.on("authentication", function(userArgs) {
-			roomsManager.registerUser(new User(userArgs));
+			var user = roomsManager.registerUser(userArgs);
+			var room = roomsManager.getRoomOfUser(user);
 			socket.emit("authenticated");
+			socket.join(room.id);
+			socket.emit("setRoom", room);
+			io.sockets.in(room.id).emit("newUser", userArgs);
+			socket.on("userRealtime", function(obj) {
+				console.log(obj);
+			});
 		});
 	});
 
 	setTimeout(function() {
-		io.sockets.emit("authenticated", "everyone");
+		console.log(roomsManager.rooms.data);
+		console.log(roomsManager.users.data);
+		console.log(roomsManager.userRoomRel.data);
 	}, 1000);
 }
