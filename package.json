@@ -20,7 +20,8 @@
     "sqlite3": "^3.1.1",
     "traceur": "0.0.96",
     "traceur-source-maps": "^1.0.6",
-    "uuid": "^2.0.1"
+    "uuid": "^2.0.1",
+    "victor": "^1.1.0"
   },
   "eslintConfig": {
     "parser": "babel-eslint",
