@@ -19,11 +19,15 @@ function mockClient(name) {
 					position: {
 						
 					},
-					vector: {
+					velocity: {
 						
 					}
 				});
 			}, 1000);
+
+			client.on("positions", function(positions) {
+				console.log(positions);
+			});
 		});
 	});
 	return client;

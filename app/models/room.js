@@ -1,35 +1,41 @@
+import uuid from "uuid";
+import {entries} from "../../helpers/iterators";
+
 export default class Room {
-	constructor({name, uuid}) {
-		this.name = name;
-		this.uuid = uuid;
-		this.capacity = 16;
-		this.userCount = 0;
-		this.users = {};
+	constructor() {
+		this.id = uuid.v4();
+		this.entities = {};
+		this.entityCount = 0;
 	}
 	isFull() {
-		return (this.userCount >= this.capacity);
-	}
-	join(user) {
-		if (this.userCount >= this.capacity) {
-			return false;
-		}
-		else {
-			this.userCount++;
-			this.users[user.name] = user;
-		}
-	}
-	isInRoom(user) {
-		if (this.users[user.name]) {
-			return true;
-		}
 		return false;
 	}
-	leave(user) {
-		if (this.users[user.name]) {
-			delete this.users[user.name];
+	getNearby(thisEntity, distance) {
+		var thisEntity = this.entities[thisEntity.id];
+		var distanceSq = distance*distance;
+		var returnEntities = [];
+		for (let [id, entity] of entries(this.entities)) {
+			if (entity !== thisEntity) {
+				if (thisEntity.position.distanceSq(entity.position) <= distanceSq) {
+					returnEntities.push(entity);
+				}
+			}
+		}
+		return returnEntities;
+	}
+	addEntity(entity) {
+		if (this.entities[entity.id]) {
+			return false;
+		}
+		this.entities[entity.id] = entity;
+		this.entityCount++;
+		return true;
+	}
+	removeEntity(entity) {
+		if (this.entities[entity.id]) {
+			delete this.entities[entity.id];
 			return true;
 		}
-		delete this.users[user.name];
 		return false;
 	}
 }

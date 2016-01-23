@@ -1,48 +1,11 @@
 import socketio from "socket.io";
 import express from "express";
 import http from "http";
-import roomsManager from "./roomsManager";
 import auth from "../routes/auth";
-
+import uuid from "uuid";
 import Victor from "victor";
 import {entries} from "../helpers/iterators";
-import uuid from "uuid";
-
-class Room {
-	constructor() {
-		this.id = uuid.v4();
-		this.entities = {};
-		this.entityCount = 0;
-	}
-	getNearby(thisEntity, distance) {
-		var thisEntity = this.entities[thisEntity.id];
-		var distanceSq = distance*distance;
-		var returnEntities = [];
-		for (let [id, entity] of entries(this.entities)) {
-			if (entity !== thisEntity) {
-				if (thisEntity.position.distanceSq(entity.position) <= distanceSq) {
-					returnEntities.push(entity);
-				}
-			}
-		}
-		return returnEntities;
-	}
-	addEntity(entity) {
-		if (this.entities[entity.id]) {
-			return false;
-		}
-		this.entities[entity.id] = entity;
-		this.entityCount++;
-		return true;
-	}
-	removeEntity(entity) {
-		if (this.entities[entity.id]) {
-			delete this.entities[entity.id];
-			return true;
-		}
-		return false;
-	}
-}
+import Room from "./models/room";
 
 class Entity {
 	constructor(type) {
@@ -58,6 +21,8 @@ class User extends Entity {
 	constructor({name}) {
 		super(User);
 		this.name = name;
+		this.position = new Victor(0, 0);
+		this.velocity = new Victor(0, 0);
 	}
 }
 
@@ -85,24 +50,29 @@ export function run() {
 
 	var io = socketio.listen(server);
 
+	var room = new Room();
 	io.sockets.on("connection", function(socket) {
 		socket.on("authentication", function(userArgs) {
-			var user = roomsManager.registerUser(userArgs);
-			var room = roomsManager.getRoomOfUser(user);
+			var user = new User(userArgs);
+			room.addEntity(user);
 			socket.emit("authenticated");
 			socket.join(room.id);
 			socket.emit("setRoom", room);
 			io.sockets.in(room.id).emit("newUser", userArgs);
 			socket.on("userRealtime", function(obj) {
-				console.log(obj);
+				var position = Victor.fromObject(obj.position);
+				var velocity = Victor.fromObject(obj.velocity);
+				user.position = position;
+				user.velocity = velocity;
 			});
+			var update = setInterval(function() {
+				socket.emit("positions", room.getNearby(user, 1000));
+			}, 1000);
 		});
 	});
 
 	setTimeout(function() {
-		console.log(roomsManager.rooms.data);
-		console.log(roomsManager.users.data);
-		console.log(roomsManager.userRoomRel.data);
+		console.log(room.entities);
 	}, 1000);
 
 	server.listen(require(__dirname + "/../config/config.json").port);
